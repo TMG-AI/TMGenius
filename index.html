@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TMGenius - Multi-AI Response Engine</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background: #ffffff;
+    }
+
+    /* Hero Section */
+    .hero {
+      background: linear-gradient(135deg, #1a365d 0%, #2d5a87 50%, #4a90a4 100%);
+      color: white;
+      padding: 50px 0 30px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="2" fill="rgba(255,255,255,0.1)"/></svg>') repeat;
+      opacity: 0.3;
+    }
+
+    .hero-content {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero h1 {
+      font-size: 3rem;
+      margin-bottom: 0.5rem;
+      font-weight: 300;
+      line-height: 1.2;
+    }
+
+    .hero .subtitle {
+      font-size: 1.2rem;
+      margin-bottom: 0;
+      opacity: 0.9;
+      font-weight: 300;
+    }
+
+    /* Main Section */
+    .upload-section {
+      padding: 20px 0;
+      background: #f8fafc;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .section-header h2 {
+      font-size: 2.2rem;
+      color: #1a365d;
+      margin-bottom: 0.5rem;
+      font-weight: 300;
+    }
+
+    .section-header p {
+      font-size: 1.1rem;
+      color: #4a5568;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .how-link {
+      color: #2d5a87;
+      font-weight: 500;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    .upload-form {
+      background: white;
+      border-radius: 15px;
+      padding: 1.5rem;
+      box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+      border: 1px solid #e2e8f0;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: #1a365d;
+      font-size: 1.1rem;
+    }
+
+    .form-group .description {
+      font-size: 0.9rem;
+      color: #64748b;
+      margin-bottom: 0.75rem;
+    }
+
+    .prompt-textarea {
+      width: 100%;
+      min-height: 200px;
+      padding: 1rem;
+      border: 2px solid #cbd5e0;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      resize: vertical;
+      outline: none;
+      transition: all 0.3s ease;
+      background: #f8fafc;
+    }
+
+    .prompt-textarea:focus {
+      border-color: #4a90a4;
+      background: white;
+    }
+
+    .prompt-textarea::placeholder {
+      color: #9ca3af;
+    }
+
+    /* File Upload Styles */
+    .file-upload-area {
+      border: 2px dashed #cbd5e0;
+      border-radius: 10px;
+      padding: 0.75rem;
+      text-align: center;
+      background: #f8fafc;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      width: 100%;
+      min-height: 80px;
+    }
+
+    .file-upload-area:hover {
+      border-color: #4a90a4;
+      background: #f1f9ff;
+    }
+
+    .file-upload-area.dragover {
+      border-color: #2d5a87;
+      background: #e6f3ff;
+      transform: scale(1.02);
+    }
+
+    .upload-icon {
+      font-size: 1.2rem;
+      color: #4a90a4;
+      margin-bottom: 0.25rem;
+    }
+
+    .upload-text {
+      font-size: 0.85rem;
+      color: #4a5568;
+      margin-bottom: 0.1rem;
+    }
+
+    .upload-subtext {
+      font-size: 0.75rem;
+      color: #64748b;
+    }
+
+    .file-input {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+      z-index: 2;
+    }
+
+    .uploaded-files {
+      margin-top: 1rem;
+    }
+
+    .file-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      background: #e6f3ff;
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+      border-left: 4px solid #4a90a4;
+    }
+
+    .file-info {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .file-name {
+      font-weight: 500;
+      color: #1a365d;
+    }
+
+    .file-size {
+      font-size: 0.8rem;
+      color: #64748b;
+    }
+
+    .remove-file {
+      background: none;
+      border: none;
+      color: #e53e3e;
+      cursor: pointer;
+      font-size: 1.2rem;
+      padding: 0.25rem;
+    }
+
+    .form-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 15px;
+    }
+
+    .character-count {
+      font-size: 0.75rem;
+      color: #64748b;
+    }
+
+    .submit-btn {
+      background: linear-gradient(135deg, #2d5a87, #4a90a4);
+      color: white;
+      border: none;
+      padding: 1rem 3rem;
+      font-size: 1.1rem;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      min-width: 200px;
+      font-weight: 600;
+    }
+
+    .submit-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(45, 90, 135, 0.3);
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .loading-spinner {
+      display: none;
+      width: 16px;
+      height: 16px;
+      border: 2px solid transparent;
+      border-top: 2px solid currentColor;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .conversation-section {
+      display: none;
+      margin-bottom: 40px;
+    }
+
+    .conversation-container {
+      background: white;
+      border-radius: 15px;
+      border: 1px solid #e2e8f0;
+      padding: 30px;
+      box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+      min-height: 300px;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+    .message {
+      margin-bottom: 20px;
+    }
+
+    .message.user {
+      text-align: right;
+    }
+
+    .message.assistant {
+      text-align: left;
+    }
+
+    .message-content {
+      display: inline-block;
+      max-width: 80%;
+      padding: 12px 16px;
+      border-radius: 16px;
+      line-height: 1.5;
+      word-wrap: break-word;
+    }
+
+    .message.user .message-content {
+      background: #2d5a87;
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+
+    .message.assistant .message-content {
+      background: #f1f5f9;
+      color: #334155;
+      border-bottom-left-radius: 4px;
+    }
+
+    .message-time {
+      font-size: 11px;
+      color: #9ca3af;
+      margin-top: 4px;
+    }
+
+    .message.user .message-time {
+      text-align: right;
+    }
+
+    .typing-indicator {
+      display: none;
+      text-align: left;
+      margin-bottom: 20px;
+    }
+
+    .typing-dots {
+      display: inline-block;
+      background: #f1f5f9;
+      padding: 12px 16px;
+      border-radius: 16px;
+      border-bottom-left-radius: 4px;
+    }
+
+    .typing-dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #94a3b8;
+      margin: 0 2px;
+      animation: typing 1.4s infinite;
+    }
+
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes typing {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+      30% { transform: translateY(-10px); opacity: 1; }
+    }
+
+    .response-input {
+      display: none;
+      margin-top: 20px;
+    }
+
+    .response-textarea {
+      width: 100%;
+      min-height: 80px;
+      padding: 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      line-height: 1.5;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    .response-textarea:focus {
+      border-color: #4a90a4;
+    }
+
+    .response-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 12px;
+      justify-content: flex-end;
+    }
+
+    .response-button {
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+      font-size: 14px;
+    }
+
+    .response-button.primary {
+      background: #2d5a87;
+      color: white;
+    }
+
+    .response-button.primary:hover {
+      background: #1a365d;
+    }
+
+    .response-button.secondary {
+      background: transparent;
+      color: #6b7280;
+      border: 1px solid #d1d5db;
+    }
+
+    .response-button.secondary:hover {
+      background: #f9fafb;
+    }
+
+    /* Dashboard Styles */
+    .dashboard {
+      display: none;
+      padding: 30px 20px;
+      background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+      border: 1px solid #e9ecef;
+      border-radius: 12px;
+      margin-top: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .dashboard h2 {
+      font-size: 2.2rem;
+      color: #1a365d;
+      margin-bottom: 0.5rem;
+      font-weight: 300;
+      text-align: center;
+      position: relative;
+    }
+
+    .dashboard h2:after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 3px;
+      background: linear-gradient(90deg, #2d5a87, #4a90a4);
+      border-radius: 2px;
+    }
+
+    .synthesized-response {
+      background: white;
+      border-radius: 10px;
+      padding: 25px;
+      margin-bottom: 30px;
+      border: 1px solid #e9ecef;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    .synthesized-response h3 {
+      color: #1a365d;
+      margin-bottom: 18px;
+      font-size: 1.3em;
+      font-weight: 600;
+    }
+
+    .response-content {
+      color: #4a5568;
+      line-height: 1.7;
+      white-space: pre-wrap;
+    }
+
+    .quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      justify-content: center;
+      margin-top: 30px;
+    }
+
+    .action-btn {
+      background: linear-gradient(135deg, #2d5a87, #4a90a4);
+      color: white;
+      padding: 1rem 3rem;
+      font-size: 1.1rem;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: none;
+      min-width: 200px;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-block;
+      box-shadow: 0 10px 25px rgba(45, 90, 135, 0.3);
+    }
+
+    .action-btn:hover {
+      background: linear-gradient(135deg, #34495e, #2c3e50);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(44, 62, 80, 0.3);
+    }
+
+    .action-btn.secondary {
+      background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+      box-shadow: 0 3px 10px rgba(149, 165, 166, 0.2);
+    }
+
+    .action-btn.secondary:hover {
+      background: linear-gradient(135deg, #7f8c8d, #95a5a6);
+      box-shadow: 0 5px 15px rgba(149, 165, 166, 0.3);
+    }
+
+    .processing-status {
+      background: #fef3c7;
+      border: 1px solid #f59e0b;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 25px;
+      font-size: 14px;
+      color: #92400e;
+      text-align: center;
+    }
+
+    /* Features Section */
+    .features {
+      padding: 40px 0;
+      background: white;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .feature-card {
+      text-align: center;
+      padding: 1.5rem;
+      border-radius: 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      transition: transform 0.3s ease;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    .feature-icon {
+      font-size: 2.5rem;
+      color: #4a90a4;
+      margin-bottom: 0.75rem;
+    }
+
+    .feature-card h3 {
+      font-size: 1.2rem;
+      color: #1a365d;
+      margin-bottom: 0.75rem;
+    }
+
+    .feature-card p {
+      color: #4a5568;
+      line-height: 1.6;
+    }
+
+    /* Footer */
+    .footer {
+      background: linear-gradient(135deg, #1a365d 0%, #2d5a87 100%);
+      padding: 20px 0;
+      margin-top: 40px;
+    }
+
+    .footer p {
+      text-align: center;
+      color: white;
+      font-size: 0.95rem;
+      margin: 0;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero h1 {
+        font-size: 2.5rem;
+      }
+      
+      .hero .subtitle {
+        font-size: 1.1rem;
+      }
+      
+      .upload-form {
+        padding: 2rem;
+      }
+      
+      .section-header h2 {
+        font-size: 2rem;
+      }
+      
+      .container {
+        padding: 0 1rem;
+      }
+      
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .quick-actions {
+        flex-direction: column;
+      }
+
+      .message-content {
+        max-width: 90%;
+      }
+
+      .form-footer {
+        flex-direction: column;
+        gap: 15px;
+        align-items: stretch;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <h1>TMGenius</h1>
+      <p class="subtitle">Multi-AI Response Engine</p>
+    </div>
+  </section>
+
+  <!-- Upload Section -->
+  <section class="upload-section">
+    <div class="container">
+      <div class="section-header">
+        <h2>Submit & Analyze</h2>
+        <p>
+          Submit your request and any supporting documents to get comprehensive analysis from multiple AI models. 
+          TMGenius can ask clarifying questions to better understand your needs before delivering optimized results.
+          See how TMGenius <a href="#features" class="how-link">works</a>.
+        </p>
+      </div>
+
+      <form class="upload-form" id="promptForm" enctype="multipart/form-data">
+        <div class="form-group">
+          <label for="promptText">Your Request</label>
+          <p class="description">Describe what you want to accomplish. Be as detailed as possible. TMGenius may ask follow-up questions to better understand your specific needs and context.</p>
+          <textarea 
+            id="promptText" 
+            name="prompt" 
+            class="prompt-textarea" 
+            placeholder="Example: I need help creating a comprehensive business plan for a new mobile app that connects local musicians with event organizers. I want to understand the market size, competitive landscape, revenue models, and go-to-market strategy..."
+            required
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Supporting Documents (Optional)</label>
+          <p class="description">Upload documents that should be analyzed as part of your request (PDF, DOC, TXT)</p>
+          <div class="file-upload-area" id="fileUploadArea">
+            <div class="upload-icon">📄</div>
+            <div class="upload-text">Click to browse or drag files here</div>
+            <div class="upload-subtext">PDF, DOC, TXT up to 10MB each</div>
+            <input 
+              type="file" 
+              class="file-input" 
+              id="fileInput" 
+              name="documents" 
+              multiple 
+              accept=".pdf,.doc,.docx,.txt"
+            />
+          </div>
+          <div class="uploaded-files" id="uploadedFiles"></div>
+        </div>
+
+        <div class="form-footer">
+          <div class="character-count">
+            <span id="charCount">0</span> characters
+          </div>
+          <button type="submit" class="submit-btn" id="submitBtn">
+            <span class="loading-spinner" id="loadingSpinner"></span>
+            <span id="buttonText">✅ Submit Request</span>
+          </button>
+        </div>
+      </form>
+
+      <div class="conversation-section" id="conversationSection">
+        <div class="conversation-container" id="conversationContainer">
+          <div class="typing-indicator" id="typingIndicator">
+            <div class="typing-dots">
+              <span class="typing-dot"></span>
+              <span class="typing-dot"></span>
+              <span class="typing-dot"></span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="response-input" id="responseInput">
+          <textarea 
+            id="responseText" 
+            class="response-textarea" 
+            placeholder="Type your response here..."
+          ></textarea>
+          <div class="response-buttons">
+            <button class="response-button secondary" onclick="skipQuestions()">Skip Questions</button>
+            <button class="response-button primary" onclick="sendResponse()">Send Response</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dashboard Results -->
+      <div class="dashboard" id="dashboard">
+        <h2>TMGenius Analysis Complete</h2>
+        <div class="processing-status" id="processingStatus" style="display: none;">
+          Processing your optimized request through multiple AI models...
+        </div>
+
+        <div class="synthesized-response">
+          <h3>🎯 Synthesized Best Response</h3>
+          <div class="response-content" id="summaryResult"></div>
+        </div>
+
+        <div class="quick-actions">
+          <button class="action-btn" onclick="downloadPDF()">Download PDF Report</button>
+          <button class="action-btn secondary" onclick="resetForm()">Submit New Request</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features" id="features">
+    <div class="container">
+      <div class="section-header">
+        <h2>How TMGenius Works</h2>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🧠</div>
+          <h3>Request Analysis</h3>
+          <p>AI analyzes your request and documents, asking clarifying questions for better understanding</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <h3>Prompt Optimization</h3>
+          <p>Your request is optimized for clarity, specificity, and effectiveness across all AI models</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🤖</div>
+          <h3>Multi-Model Processing</h3>
+          <p>Optimized prompt runs through OpenAI, Claude, and Gemini simultaneously with document context</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📄</div>
+          <h3>Synthesis & Report</h3>
+          <p>AI synthesizes all responses into a comprehensive analysis with downloadable PDF report</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div>
+      <p>&copy; 2025 <strong>The Messina Group</strong>. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    const promptTextarea = document.getElementById('promptText');
+    const charCount = document.getElementById('charCount');
+    const form = document.getElementById('promptForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const buttonText = document.getElementById('buttonText');
+    const conversationSection = document.getElementById('conversationSection');
+    const conversationContainer = document.getElementById('conversationContainer');
+    const typingIndicator = document.getElementById('typingIndicator');
+    const responseInput = document.getElementById('responseInput');
+    const responseText = document.getElementById('responseText');
+    const dashboard = document.getElementById('dashboard');
+    const processingStatus = document.getElementById('processingStatus');
+    const fileUploadArea = document.getElementById('fileUploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const uploadedFiles = document.getElementById('uploadedFiles');
+
+    let conversationHistory = [];
+    let isProcessing = false;
+    let currentReportData = null;
+    let uploadedFilesList = [];
+
+    // Character counter
+    promptTextarea.addEventListener('input', function() {
+      charCount.textContent = this.value.length;
+    });
+
+    // File upload handling
+    fileUploadArea.addEventListener('click', () => fileInput.click());
+    fileUploadArea.addEventListener('dragover', handleDragOver);
+    fileUploadArea.addEventListener('dragleave', handleDragLeave);
+    fileUploadArea.addEventListener('drop', handleDrop);
+    fileInput.addEventListener('change', handleFileSelect);
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      fileUploadArea.classList.add('dragover');
+    }
+
+    function handleDragLeave(e) {
+      e.preventDefault();
+      fileUploadArea.classList.remove('dragover');
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      fileUploadArea.classList.remove('dragover');
+      const files = Array.from(e.dataTransfer.files);
+      processFiles(files);
+    }
+
+    function handleFileSelect(e) {
+      const files = Array.from(e.target.files);
+      processFiles(files);
+    }
+
+    function processFiles(files) {
+      files.forEach(file => {
+        // Validate file type
+        const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
+        if (!allowedTypes.includes(file.type)) {
+          alert(`File type not supported: ${file.name}. Please upload PDF, DOC, DOCX, or TXT files.`);
+          return;
+        }
+
+        // Validate file size (10MB limit)
+        if (file.size > 10 * 1024 * 1024) {
+          alert(`File too large: ${file.name}. Maximum size is 10MB.`);
+          return;
+        }
+
+        // Add to uploaded files list
+        uploadedFilesList.push(file);
+        displayUploadedFile(file, uploadedFilesList.length - 1);
+      });
+    }
+
+    function displayUploadedFile(file, index) {
+      const fileItem = document.createElement('div');
+      fileItem.className = 'file-item';
+      fileItem.innerHTML = `
+        <div class="file-info">
+          <span class="file-name">${file.name}</span>
+          <span class="file-size">(${(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+        </div>
+        <button type="button" class="remove-file" onclick="removeFile(${index})">×</button>
+      `;
+      uploadedFiles.appendChild(fileItem);
+    }
+
+    function removeFile(index) {
+      uploadedFilesList.splice(index, 1);
+      uploadedFiles.innerHTML = '';
+      uploadedFilesList.forEach((file, i) => displayUploadedFile(file, i));
+    }
+
+    // Form submission
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const prompt = promptTextarea.value.trim();
+      if (!prompt || isProcessing) return;
+
+      isProcessing = true;
+      submitBtn.disabled = true;
+      loadingSpinner.style.display = 'inline-block';
+      buttonText.textContent = 'Analyzing...';
+      
+      // Prepare form data
+      const formData = new FormData();
+      formData.append('prompt', prompt);
+      formData.append('phase', 'initial');
+      
+      // Add uploaded files
+      uploadedFilesList.forEach((file, index) => {
+        formData.append(`documents`, file);
+      });
+
+      try {
+        // Send to your TMGenius webhook
+        const response = await fetch('/api/tmgenius', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await response.json();
+        
+        if (result.phase === 'clarification') {
+          // Show clarification questions
+          showClarificationQuestions(result);
+        } else {
+          // Show final results
+          showFinalResults(result);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Sorry, there was an error processing your request. Please try again.');
+        resetProcessingState();
+      }
+    });
+
+    function showClarificationQuestions(result) {
+      // Show conversation section
+      conversationSection.style.display = 'block';
+      conversationSection.scrollIntoView({ behavior: 'smooth' });
+      
+      // Add user message
+      addMessage(promptTextarea.value, true);
+      
+      // Add AI questions
+      const questionsText = `I need some clarification to provide the best analysis:\n\n${result.questions.map((q, i) => `${i + 1}. ${q}`).join('\n')}\n\n${result.reason}`;
+      
+      setTimeout(() => {
+        addMessage(questionsText);
+        showResponseInput();
+      }, 1000);
+    }
+
+    function showFinalResults(result) {
+      currentReportData = result;
+      
+      // Show dashboard
+      dashboard.style.display = 'block';
+      dashboard.scrollIntoView({ behavior: 'smooth' });
+      
+      // Populate results
+      document.getElementById('summaryResult').textContent = result.summary;
+      
+      resetProcessingState();
+    }
+
+    function addMessage(content, isUser = false) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
+      
+      const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      
+      messageDiv.innerHTML = `
+        <div class="message-content">${content}</div>
+        <div class="message-time">${time}</div>
+      `;
+
+      conversationContainer.insertBefore(messageDiv, typingIndicator);
+      conversationContainer.scrollTop = conversationContainer.scrollHeight;
+      
+      conversationHistory.push({role: isUser ? 'user' : 'assistant', content: content});
+    }
+
+    function showResponseInput() {
+      responseInput.style.display = 'block';
+      responseText.focus();
+    }
+
+    function hideResponseInput() {
+      responseInput.style.display = 'none';
+      responseText.value = '';
+    }
+
+    async function sendResponse() {
+      const response = responseText.value.trim();
+      if (!response) return;
+      
+      // Add user response
+      addMessage(response, true);
+      hideResponseInput();
+      
+      // Show processing
+      processingStatus.style.display = 'block';
+      dashboard.style.display = 'block';
+      dashboard.scrollIntoView({ behavior: 'smooth' });
+      
+      // Prepare clarified request
+      const formData = new FormData();
+      formData.append('prompt', promptTextarea.value);
+      formData.append('clarified_prompt', response);
+      formData.append('phase', 'clarified');
+      
+      // Add uploaded files again
+      uploadedFilesList.forEach((file) => {
+        formData.append(`documents`, file);
+      });
+
+      try {
+        const apiResponse = await fetch('/api/tmgenius', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await apiResponse.json();
+        showFinalResults(result);
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Sorry, there was an error processing your clarified request.');
+        resetProcessingState();
+      }
+    }
+
+    function skipQuestions() {
+      hideResponseInput();
+      addMessage("I'll proceed with the analysis based on your original request.");
+      
+      // Show processing
+      processingStatus.style.display = 'block';
+      dashboard.style.display = 'block';
+      dashboard.scrollIntoView({ behavior: 'smooth' });
+      
+      // Process original request
+      setTimeout(async () => {
+        const formData = new FormData();
+        formData.append('prompt', promptTextarea.value);
+        formData.append('phase', 'skip_clarification');
+        
+        uploadedFilesList.forEach((file) => {
+          formData.append(`documents`, file);
+        });
+
+        try {
+          const response = await fetch('/api/tmgenius', {
+            method: 'POST',
+            body: formData
+          });
+
+          const result = await response.json();
+          showFinalResults(result);
+        } catch (error) {
+          console.error('Error:', error);
+          alert('Sorry, there was an error processing your request.');
+          resetProcessingState();
+        }
+      }, 1000);
+    }
+
+    function resetProcessingState() {
+      isProcessing = false;
+      submitBtn.disabled = false;
+      loadingSpinner.style.display = 'none';
+      buttonText.textContent = '✅ Submit Request';
+      processingStatus.style.display = 'none';
+    }
+
+    function downloadPDF() {
+      if (!currentReportData) {
+        alert('No report data available for download.');
+        return;
+      }
+
+      // Create PDF using jsPDF
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      
+      // Add title
+      doc.setFontSize(20);
+      doc.setFont(undefined, 'bold');
+      doc.text('TMGenius Multi-AI Analysis Report', 20, 30);
+      
+      // Add date
+      doc.setFontSize(12);
+      doc.setFont(undefined, 'normal');
+      doc.text(`Generated: ${new Date().toLocaleDateString()}`, 20, 45);
+      
+      // Add synthesized response
+      doc.setFontSize(16);
+      doc.setFont(undefined, 'bold');
+      doc.text('Synthesized Best Response', 20, 65);
+      
+      doc.setFontSize(11);
+      doc.setFont(undefined, 'normal');
+      
+      // Split text into lines that fit the page
+      const splitSummary = doc.splitTextToSize(currentReportData.summary, 170);
+      doc.text(splitSummary, 20, 80);
+      
+      // Add insights if available
+      if (currentReportData.insights) {
+        const summaryHeight = splitSummary.length * 5;
+        const insightsY = 90 + summaryHeight;
+        
+        doc.setFontSize(16);
+        doc.setFont(undefined, 'bold');
+        doc.text('Multi-Model Analysis', 20, insightsY);
+        
+        doc.setFontSize(11);
+        doc.setFont(undefined, 'normal');
+        const splitInsights = doc.splitTextToSize(currentReportData.insights, 170);
+        doc.text(splitInsights, 20, insightsY + 15);
+      }
+      
+      // Add footer
+      const pageHeight = doc.internal.pageSize.height;
+      doc.setFontSize(10);
+      doc.text('Powered by TMGenius - Multi-AI Response Engine', 20, pageHeight - 20);
+      doc.text('© 2025 The Messina Group. All rights reserved.', 20, pageHeight - 10);
+      
+      // Save the PDF
+      const fileName = `TMGenius_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+      doc.save(fileName);
+    }
+
+    function resetForm() {
+      form.reset();
+      charCount.textContent = '0';
+      uploadedFilesList = [];
+      uploadedFiles.innerHTML = '';
+      conversationSection.style.display = 'none';
+      dashboard.style.display = 'none';
+      conversationContainer.innerHTML = '<div class="typing-indicator" id="typingIndicator"><div class="typing-dots"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div></div>';
+      hideResponseInput();
+      conversationHistory = [];
+      currentReportData = null;
+      
+      document.querySelector('.upload-form').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Smooth scrolling for navigation links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }
+      });
+    });
+
+    // Auto-resize response textarea
+    responseText.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = Math.max(80, this.scrollHeight) + 'px';
+    });
+  </script>
+</body>
+</html>
