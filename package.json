@@ -1,0 +1,18 @@
+{
+  "type": "module",
+  "name": "fact-checker-frontend",
+  "version": "1.0.0",
+  "description": "Frontend for fact-checking application",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'No build step needed for static frontend'",
+    "start": "echo 'Use vercel dev for local development'"
+  },
+  "dependencies": {
+    "formidable": "^3.5.1",
+    "form-data": "^4.0.0",
+    "node-fetch": "^2.7.0",
+    "busboy": "^1.6.0"
+  }
+}
