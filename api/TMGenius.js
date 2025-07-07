@@ -1,4 +1,4 @@
-// api/tmgenius.js - Updated for TMGenius workflow
+// api/tmgenius.js - TMGenius Integration
 import Busboy from 'busboy';
 import FormData from 'form-data';
 import fetch from 'node-fetch';
@@ -7,7 +7,7 @@ import zlib from 'zlib';
 export const config = {
   api: {
     bodyParser: false,
-    maxDuration: 800, // Perfect for TMGenius 13+ minute processing
+    maxDuration: 800, // 13+ minutes for TMGenius processing
   },
 };
 
@@ -60,7 +60,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Prompt is required' });
     }
 
-    // Create FormData for TMGenius
+    // Create FormData for TMGenius webhook
     const formData = new FormData();
     formData.append('prompt', prompt);
     if (phase) formData.append('phase', phase);
@@ -72,8 +72,8 @@ export default async function handler(req, res) {
       });
     });
 
-    // Call your TMGenius webhook (update with your actual URL)
-    const tmgeniusResponse = await fetch('https://YOUR-N8N-CLOUD-INSTANCE.app.n8n.cloud/webhook/8c7f9c77-c7a2-4316-ba2a-3b9ffefd4bf7', {
+    // Call your TMGenius webhook
+    const tmgeniusResponse = await fetch('https://swheatman.app.n8n.cloud/webhook/8c7f9c77-c7a2-4316-ba2a-3b9ffefd4bf7', {
       method: 'POST',
       body: formData,
       headers: formData.getHeaders(),
