@@ -2,15 +2,14 @@
 .env
 .env.local
 .env.production
-.env.development
 
 # Vercel deployment files
 .vercel/
 
-# Node modules (if using any npm packages)
+# Node modules
 node_modules/
 
-# Build outputs (not needed for static HTML)
+# Build outputs
 dist/
 build/
 .next/
@@ -19,35 +18,11 @@ out/
 # Logs
 *.log
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
 # OS generated files
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
 Thumbs.db
 
 # IDE files
 .vscode/
 .idea/
-*.swp
-*.swo
-*.tmp
-*.temp
-
-# Backup files
-*~
-*.bak
-*.backup
-
-# Cache directories
-.cache/
-.parcel-cache/
-
-# Optional: Test files (if you add testing later)
-coverage/
-.nyc_output/
