@@ -687,18 +687,18 @@
 
         <div class="form-group">
           <label>Supporting Documents (Optional)</label>
-          <p class="description">Upload documents that should be analyzed as part of your request (PDF, DOC, TXT)</p>
+          <p class="description">Upload documents that should be analyzed as part of your request (PDF, DOC, TXT, JSON)</p>
           <div class="file-upload-area" id="fileUploadArea">
             <div class="upload-icon">📄</div>
             <div class="upload-text">Click to browse or drag files here</div>
-            <div class="upload-subtext">PDF, DOC, TXT up to 10MB each</div>
+            <div class="upload-subtext">PDF, DOC, TXT, JSON up to 10MB each</div>
             <input 
               type="file" 
               class="file-input" 
               id="fileInput" 
               name="documents" 
               multiple 
-              accept=".pdf,.doc,.docx,.txt"
+              accept=".pdf,.doc,.docx,.txt,.json,application/json"
             />
           </div>
           <div class="uploaded-files" id="uploadedFiles"></div>
@@ -857,18 +857,26 @@
     function processFiles(files) {
       files.forEach(file => {
         // Validate file type
-        const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
-        if (!allowedTypes.includes(file.type)) {
-          alert(`File type not supported: ${file.name}. Please upload PDF, DOC, DOCX, or TXT files.`);
-          return;
-        }
+        const allowedTypes = [
+      'application/pdf', 
+      'application/msword', 
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 
+      'text/plain',
+      'application/json'  // Add JSON support
+    ];
 
-        // Validate file size (10MB limit)
-        if (file.size > 10 * 1024 * 1024) {
-          alert(`File too large: ${file.name}. Maximum size is 10MB.`);
-          return;
-        }
+        // Update your file validation
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB per file
+const MAX_TOTAL_FILES = 5; // Reasonable limit for multiple uploads
 
+if (uploadedFilesList.length >= MAX_TOTAL_FILES) {
+  alert(`Maximum ${MAX_TOTAL_FILES} files allowed per request.`);
+  return;
+}
+if (!allowedTypes.includes(file.type)) {
+      alert(`File type not supported: ${file.name}. Please upload PDF, DOC, DOCX, TXT, or JSON files.`);
+      return;
+    }
         // Add to uploaded files list
         uploadedFilesList.push(file);
         displayUploadedFile(file, uploadedFilesList.length - 1);
