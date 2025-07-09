@@ -528,20 +528,19 @@
             id="promptText" 
             name="prompt" 
             class="prompt-textarea" 
-            placeholder="Example: Create a comprehensive framework for testing agentic workflows in n8n. Target audience: n8n developers and workflow automation engineers who need to validate their AI-powered automations. Format: Step-by-step testing guide with practical code examples and best practices. Tone: Professional but accessible, with actionable insights and real-world examples."
-            required
+          required
           ></textarea>
         </div>
 
         <!-- File Upload Section -->
         <div class="form-group">
           <label for="documentUpload">Upload Documents (Optional)</label>
-          <p class="description">Upload relevant documents to enhance the analysis context.</p>
+          <p class="description">Upload relevant documents to enhance the analysis context. Supports PDF, DOC, DOCX, TXT, MD, and JSON files.</p>
           <div class="file-upload-area" id="fileUploadArea">
-            <input type="file" id="documentUpload" name="documents" multiple accept=".pdf,.doc,.docx,.txt,.md">
+            <input type="file" id="documentUpload" name="documents" multiple accept=".pdf,.doc,.docx,.txt,.md,.json">
             <div class="upload-icon">📄</div>
             <div class="upload-text">Click to upload or drag and drop</div>
-            <div class="upload-subtext">PDF, DOC, DOCX, TXT, MD up to 10MB each</div>
+            <div class="upload-subtext">PDF, DOC, DOCX, TXT, MD, JSON up to 10MB each</div>
           </div>
           <div class="file-list" id="fileList"></div>
         </div>
