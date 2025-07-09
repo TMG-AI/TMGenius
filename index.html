@@ -150,6 +150,99 @@
       color: #9ca3af;
     }
 
+    /* File Upload Styles */
+    .file-upload-area {
+      border: 2px dashed #cbd5e0;
+      border-radius: 10px;
+      padding: 2rem;
+      text-align: center;
+      transition: all 0.3s ease;
+      background: #f8fafc;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .file-upload-area:hover, .file-upload-area.drag-over {
+      border-color: #4a90a4;
+      background: #f0f9ff;
+    }
+
+    .file-upload-area input[type="file"] {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .upload-icon {
+      font-size: 3rem;
+      color: #9ca3af;
+      margin-bottom: 1rem;
+    }
+
+    .upload-text {
+      color: #4a5568;
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .upload-subtext {
+      color: #9ca3af;
+      font-size: 0.9rem;
+    }
+
+    .file-list {
+      margin-top: 1rem;
+    }
+
+    .file-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+    }
+
+    .file-info {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .file-icon {
+      color: #4a90a4;
+    }
+
+    .file-name {
+      font-weight: 500;
+      color: #1a365d;
+    }
+
+    .file-size {
+      color: #9ca3af;
+      font-size: 0.8rem;
+    }
+
+    .remove-file {
+      background: none;
+      border: none;
+      color: #ef4444;
+      cursor: pointer;
+      padding: 0.25rem;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+    }
+
+    .remove-file:hover {
+      background: #fee2e2;
+    }
+
     .form-footer {
       display: flex;
       justify-content: space-between;
@@ -400,6 +493,10 @@
         gap: 15px;
         align-items: stretch;
       }
+
+      .file-upload-area {
+        padding: 1.5rem;
+      }
     }
   </style>
 </head>
@@ -434,6 +531,19 @@
             placeholder="Example: Create a comprehensive framework for testing agentic workflows in n8n. Target audience: n8n developers and workflow automation engineers who need to validate their AI-powered automations. Format: Step-by-step testing guide with practical code examples and best practices. Tone: Professional but accessible, with actionable insights and real-world examples."
             required
           ></textarea>
+        </div>
+
+        <!-- File Upload Section -->
+        <div class="form-group">
+          <label for="documentUpload">Upload Documents (Optional)</label>
+          <p class="description">Upload relevant documents to enhance the analysis context.</p>
+          <div class="file-upload-area" id="fileUploadArea">
+            <input type="file" id="documentUpload" name="documents" multiple accept=".pdf,.doc,.docx,.txt,.md">
+            <div class="upload-icon">📄</div>
+            <div class="upload-text">Click to upload or drag and drop</div>
+            <div class="upload-subtext">PDF, DOC, DOCX, TXT, MD up to 10MB each</div>
+          </div>
+          <div class="file-list" id="fileList"></div>
         </div>
 
         <div class="form-footer">
@@ -508,7 +618,6 @@
   </footer>
 
   <script>
-    // Simple, clean JavaScript with comprehensive error handling
     document.addEventListener('DOMContentLoaded', function() {
       try {
         const promptTextarea = document.getElementById('promptText');
@@ -519,9 +628,13 @@
         const buttonText = document.getElementById('buttonText');
         const dashboard = document.getElementById('dashboard');
         const processingStatus = document.getElementById('processingStatus');
+        const fileUploadArea = document.getElementById('fileUploadArea');
+        const documentUpload = document.getElementById('documentUpload');
+        const fileList = document.getElementById('fileList');
 
         let isProcessing = false;
         let currentReportData = null;
+        let uploadedFiles = [];
 
         // Character counter
         if (promptTextarea && charCount) {
@@ -529,6 +642,84 @@
             charCount.textContent = this.value.length;
           });
         }
+
+        // File upload handling
+        if (documentUpload && fileUploadArea && fileList) {
+          documentUpload.addEventListener('change', handleFileSelect);
+          
+          // Drag and drop
+          fileUploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('drag-over');
+          });
+          
+          fileUploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+          });
+          
+          fileUploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            handleFiles(files);
+          });
+        }
+
+        function handleFileSelect(e) {
+          handleFiles(e.target.files);
+        }
+
+        function handleFiles(files) {
+          for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            
+            // Validate file size (10MB max)
+            if (file.size > 10 * 1024 * 1024) {
+              alert(`File "${file.name}" is too large. Maximum size is 10MB.`);
+              continue;
+            }
+            
+            // Check if file already exists
+            const existingFile = uploadedFiles.find(f => f.name === file.name && f.size === file.size);
+            if (existingFile) {
+              continue;
+            }
+            
+            uploadedFiles.push(file);
+            displayFile(file);
+          }
+        }
+
+        function displayFile(file) {
+          const fileItem = document.createElement('div');
+          fileItem.className = 'file-item';
+          fileItem.innerHTML = `
+            <div class="file-info">
+              <span class="file-icon">📄</span>
+              <span class="file-name">${file.name}</span>
+              <span class="file-size">(${formatFileSize(file.size)})</span>
+            </div>
+            <button type="button" class="remove-file" onclick="removeFile('${file.name}', this)">✕</button>
+          `;
+          fileList.appendChild(fileItem);
+        }
+
+        function formatFileSize(bytes) {
+          if (bytes === 0) return '0 Bytes';
+          const k = 1024;
+          const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+          const i = Math.floor(Math.log(bytes) / Math.log(k));
+          return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        window.removeFile = function(fileName, buttonElement) {
+          uploadedFiles = uploadedFiles.filter(file => file.name !== fileName);
+          const fileItem = buttonElement.closest('.file-item');
+          if (fileItem && fileItem.parentNode) {
+            fileItem.parentNode.removeChild(fileItem);
+          }
+        };
 
         // Form submission
         if (form) {
@@ -556,14 +747,19 @@
                 dashboard.scrollIntoView({ behavior: 'smooth' });
               }
 
-              // Instead of JSON body, use query parameters
-const queryParams = new URLSearchParams({
-  prompt: prompt
-});
+              // Create FormData for file uploads
+              const formData = new FormData();
+              formData.append('prompt', prompt);
+              
+              // Add uploaded files
+              uploadedFiles.forEach((file) => {
+                formData.append('documents', file);
+              });
 
-const response = await fetch(`https://swheatman.app.n8n.cloud/webhook/8c7f9c77-c7a2-4316-ba2a-3b9ffefd4bf7?prompt=${encodeURIComponent(prompt)}`, {
-  method: 'GET'
-});
+              const response = await fetch('https://swheatman.app.n8n.cloud/webhook/8c7f9c77-c7a2-4316-ba2a-3b9ffefd4bf7', {
+                method: 'POST',
+                body: formData
+              });
 
               if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -611,6 +807,10 @@ const response = await fetch(`https://swheatman.app.n8n.cloud/webhook/8c7f9c77-c
           if (dashboard) dashboard.style.display = 'none';
           currentReportData = null;
           
+          // Clear uploaded files
+          uploadedFiles = [];
+          if (fileList) fileList.innerHTML = '';
+          
           const uploadForm = document.querySelector('.upload-form');
           if (uploadForm) uploadForm.scrollIntoView({ behavior: 'smooth' });
         };
@@ -622,12 +822,12 @@ const response = await fetch(`https://swheatman.app.n8n.cloud/webhook/8c7f9c77-c
           }
 
           try {
-            if (typeof window.jspdf === 'undefined') {
+            if (typeof window.jsPDF === 'undefined') {
               alert('PDF library not loaded. Please refresh the page and try again.');
               return;
             }
 
-            const { jsPDF } = window.jspdf;
+            const { jsPDF } = window.jsPDF;
             const doc = new jsPDF();
             
             // Add title
