@@ -1,24 +1,45 @@
-// api/tmgenius.js - TMGenius Integration
+// api/tmgenius.js - TMGenius Integration with File Text Extraction
 import Busboy from 'busboy';
-import FormData from 'form-data';
 import fetch from 'node-fetch';
 import zlib from 'zlib';
 
 export const config = {
   api: {
     bodyParser: false,
-    maxDuration: 800, // 13+ minutes for TMGenius processing
+    maxDuration: 800,
   },
 };
+
+// Simple text extraction function
+function extractTextFromFile(buffer, filename) {
+  const ext = filename.toLowerCase().split('.').pop();
+  
+  try {
+    switch (ext) {
+      case 'txt':
+      case 'md':
+      case 'json':
+        return buffer.toString('utf8');
+      
+      case 'csv':
+        return buffer.toString('utf8');
+        
+      default:
+        // For PDF, DOC, etc. - return filename and size info
+        return `[File: ${filename} (${buffer.length} bytes) - Content extraction not available for this file type]`;
+    }
+  } catch (error) {
+    return `[File: ${filename} - Error reading file content]`;
+  }
+}
 
 export default async function handler(req, res) {
   console.log('🚀 TMGenius API called - Method:', req.method);
   
-  // CORS headers for TMGenius
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
+  
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -29,26 +50,31 @@ export default async function handler(req, res) {
     });
     
     let prompt = '';
-    let phase = 'initial';
-    const files = [];
+    const fileContents = [];
 
-    // Handle form fields and files
     busboy.on('field', (fieldname, value) => {
       if (fieldname === 'prompt') prompt = value;
-      if (fieldname === 'phase') phase = value;
     });
 
     busboy.on('file', (fieldname, file, info) => {
       const chunks = [];
       file.on('data', chunk => chunks.push(chunk));
       file.on('end', () => {
-        files.push({
-          fieldname,
-          filename: info.filename || `document-${Date.now()}.pdf`,
-          buffer: Buffer.concat(chunks)
+        const buffer = Buffer.concat(chunks);
+        const filename = info.filename || `document-${Date.now()}`;
+        
+        console.log(`📎 Processing file: ${filename} (${buffer.length} bytes)`);
+        
+        // Extract text content from file
+        const textContent = extractTextFromFile(buffer, filename);
+        fileContents.push({
+          filename,
+          content: textContent
         });
       });
     });
+
+    req.pipe(busboy);
 
     await new Promise((resolve, reject) => {
       busboy.on('finish', resolve);
@@ -60,46 +86,47 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Prompt is required' });
     }
 
-    // Create FormData for TMGenius webhook
-    const formData = new FormData();
-    formData.append('prompt', prompt);
-    if (phase) formData.append('phase', phase);
+    // 🔧 ENHANCED PROMPT: Combine user prompt + file contents
+    let enhancedPrompt = prompt;
     
-    files.forEach(file => {
-      formData.append('documents', file.buffer, {
-        filename: file.filename,
-        contentType: 'application/pdf'
+    if (fileContents.length > 0) {
+      enhancedPrompt += '\n\n--- UPLOADED DOCUMENTS ---\n';
+      fileContents.forEach((file, index) => {
+        enhancedPrompt += `\nDocument ${index + 1}: ${file.filename}\n`;
+        enhancedPrompt += `Content:\n${file.content}\n`;
+        enhancedPrompt += '---\n';
       });
-    });
+    }
 
-    // Call your TMGenius webhook
-    const tmgeniusResponse = await fetch('https://swheatman.app.n8n.cloud/webhook/8c7f9c77-c7a2-4316-ba2a-3b9ffefd4bf7', {
-      method: 'POST',
-      body: formData,
-      headers: formData.getHeaders(),
+    console.log('📝 Enhanced prompt length:', enhancedPrompt.length);
+    console.log('📎 Files processed:', fileContents.length);
+
+    // Send enhanced prompt to n8n via GET (that works!)
+    const tmgeniusUrl = `https://swheatman.app.n8n.cloud/webhook/8c7f9c77-c7a2-4316-ba2a-3b9ffefd4bf7?prompt=${encodeURIComponent(enhancedPrompt)}`;
+    
+    const tmgeniusResponse = await fetch(tmgeniusUrl, {
+      method: 'GET',
       timeout: 800000
     });
 
     if (!tmgeniusResponse.ok) {
       const errorText = await tmgeniusResponse.text();
+      console.error('❌ TMGenius error:', errorText);
       return res.status(500).json({ error: 'TMGenius processing failed', details: errorText });
     }
 
     const responseText = await tmgeniusResponse.text();
     const responseData = JSON.parse(responseText);
 
-    // Handle TMGenius clarification vs final response
-    if (responseData.phase === 'clarification') {
-      return res.status(200).json(responseData);
-    } else {
-      // Compress large responses
-      const jsonString = JSON.stringify(responseData);
-      const compressedData = zlib.gzipSync(jsonString);
-      
-      res.setHeader('Content-Encoding', 'gzip');
-      res.setHeader('Content-Type', 'application/json');
-      return res.send(compressedData);
-    }
+    console.log('✅ TMGenius response received');
+
+    // Return results directly to dashboard
+    const jsonString = JSON.stringify(responseData);
+    const compressedData = zlib.gzipSync(jsonString);
+    
+    res.setHeader('Content-Encoding', 'gzip');
+    res.setHeader('Content-Type', 'application/json');
+    return res.send(compressedData);
 
   } catch (error) {
     console.error('💥 TMGenius API error:', error.message);
