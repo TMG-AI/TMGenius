@@ -1,16 +1,13 @@
-// api/tmgenius.js - TMGenius Integration with File Text Extraction
+// api/tmgenius.js - Fixed CORS and fetch issues
 import Busboy from 'busboy';
-import fetch from 'node-fetch';
-import zlib from 'zlib';
 
 export const config = {
   api: {
     bodyParser: false,
-    maxDuration: 800,
+    maxDuration: 60, // Reduce timeout
   },
 };
 
-// Simple text extraction function
 function extractTextFromFile(buffer, filename) {
   const ext = filename.toLowerCase().split('.').pop();
   
@@ -20,12 +17,9 @@ function extractTextFromFile(buffer, filename) {
       case 'md':
       case 'json':
         return buffer.toString('utf8');
-      
       case 'csv':
         return buffer.toString('utf8');
-        
       default:
-        // For PDF, DOC, etc. - return filename and size info
         return `[File: ${filename} (${buffer.length} bytes) - Content extraction not available for this file type]`;
     }
   } catch (error) {
@@ -34,8 +28,7 @@ function extractTextFromFile(buffer, filename) {
 }
 
 export default async function handler(req, res) {
-  console.log('🚀 TMGenius API called - Method:', req.method);
-  
+  // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -62,15 +55,8 @@ export default async function handler(req, res) {
       file.on('end', () => {
         const buffer = Buffer.concat(chunks);
         const filename = info.filename || `document-${Date.now()}`;
-        
-        console.log(`📎 Processing file: ${filename} (${buffer.length} bytes)`);
-        
-        // Extract text content from file
         const textContent = extractTextFromFile(buffer, filename);
-        fileContents.push({
-          filename,
-          content: textContent
-        });
+        fileContents.push({ filename, content: textContent });
       });
     });
 
@@ -86,50 +72,25 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Prompt is required' });
     }
 
-    // 🔧 ENHANCED PROMPT: Combine user prompt + file contents
+    // Create enhanced prompt
     let enhancedPrompt = prompt;
-    
     if (fileContents.length > 0) {
       enhancedPrompt += '\n\n--- UPLOADED DOCUMENTS ---\n';
       fileContents.forEach((file, index) => {
         enhancedPrompt += `\nDocument ${index + 1}: ${file.filename}\n`;
-        enhancedPrompt += `Content:\n${file.content}\n`;
-        enhancedPrompt += '---\n';
+        enhancedPrompt += `Content:\n${file.content}\n---\n`;
       });
     }
 
-    console.log('📝 Enhanced prompt length:', enhancedPrompt.length);
-    console.log('📎 Files processed:', fileContents.length);
-
-    // Send enhanced prompt to n8n via GET (that works!)
-    const tmgeniusUrl = `https://swheatman.app.n8n.cloud/webhook/8c7f9c77-c7a2-4316-ba2a-3b9ffefd4bf7?prompt=${encodeURIComponent(enhancedPrompt)}`;
-    
-    const tmgeniusResponse = await fetch(tmgeniusUrl, {
-      method: 'GET',
-      timeout: 800000
+    // 🔧 FIXED: Return the enhanced prompt to frontend instead of calling n8n directly
+    return res.status(200).json({
+      enhancedPrompt,
+      filesProcessed: fileContents.length,
+      originalPrompt: prompt
     });
 
-    if (!tmgeniusResponse.ok) {
-      const errorText = await tmgeniusResponse.text();
-      console.error('❌ TMGenius error:', errorText);
-      return res.status(500).json({ error: 'TMGenius processing failed', details: errorText });
-    }
-
-    const responseText = await tmgeniusResponse.text();
-    const responseData = JSON.parse(responseText);
-
-    console.log('✅ TMGenius response received');
-
-    // Return results directly to dashboard
-    const jsonString = JSON.stringify(responseData);
-    const compressedData = zlib.gzipSync(jsonString);
-    
-    res.setHeader('Content-Encoding', 'gzip');
-    res.setHeader('Content-Type', 'application/json');
-    return res.send(compressedData);
-
   } catch (error) {
-    console.error('💥 TMGenius API error:', error.message);
+    console.error('Error:', error);
     return res.status(500).json({ error: 'Internal server error', message: error.message });
   }
 }
