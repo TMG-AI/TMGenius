@@ -561,11 +561,8 @@ const queryParams = new URLSearchParams({
   prompt: prompt
 });
 
-const response = await fetch(`https://swheatman.app.n8n.cloud/webhook/8c7f9c77-c7a2-4316-ba2a-3b9ffefd4bf7?${queryParams}`, {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  }
+const response = await fetch(`https://swheatman.app.n8n.cloud/webhook/8c7f9c77-c7a2-4316-ba2a-3b9ffefd4bf7?prompt=${encodeURIComponent(prompt)}`, {
+  method: 'GET'
 });
 
               if (!response.ok) {
